@@ -11,14 +11,12 @@
 int WaitingVehicles::getSize()
 {
     std::lock_guard<std::mutex> lock(_mutex);
-
     return _vehicles.size();
 }
 
 void WaitingVehicles::pushBack(std::shared_ptr<Vehicle> vehicle, std::promise<void> &&promise)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-
     _vehicles.push_back(vehicle);
     _promises.push_back(std::move(promise));
 }
@@ -26,15 +24,9 @@ void WaitingVehicles::pushBack(std::shared_ptr<Vehicle> vehicle, std::promise<vo
 void WaitingVehicles::permitEntryToFirstInQueue()
 {
     std::lock_guard<std::mutex> lock(_mutex);
-
-    // get entries from the front of both queues
     auto firstPromise = _promises.begin();
     auto firstVehicle = _vehicles.begin();
-
-    // fulfill promise and send signal back that permission to enter has been granted
     firstPromise->set_value();
-
-    // remove front elements from both queues
     _vehicles.erase(firstVehicle);
     _promises.erase(firstPromise);
 }
@@ -69,13 +61,11 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
     std::unique_lock<std::mutex> lck(_mtx);
     std::cout << "Intersection #" << _id << "::addVehicleToQueue: thread id = " << std::this_thread::get_id() << std::endl;
     lck.unlock();
-
     std::promise<void> prmsVehicleAllowedToEnter;
     std::future<void> ftrVehicleAllowedToEnter = prmsVehicleAllowedToEnter.get_future();
     _waitingVehicles.pushBack(vehicle, std::move(prmsVehicleAllowedToEnter));
     ftrVehicleAllowedToEnter.wait();
     lck.lock();
-    std::cout << "Intersection #" << _id << ": Vehicle #" << vehicle->getID() << " is granted entry." << std::endl;
 
     if(_trafficLight.getCurrentPhase() == TrafficLightPhase::red){
         _trafficLight.waitForGreen();

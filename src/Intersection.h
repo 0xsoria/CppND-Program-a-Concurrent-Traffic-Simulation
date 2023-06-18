@@ -16,7 +16,6 @@ class WaitingVehicles
 {
 public:
     int getSize();
-
     void pushBack(std::shared_ptr<Vehicle> vehicle, std::promise<void> &&promise);
     void permitEntryToFirstInQueue();
 
